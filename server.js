@@ -4,6 +4,7 @@ const cors = require("cors")
 const Table = require("./model/Table");
 const SaleReport = require("./model/SaleReport");
 const Product = require('./model/Product');
+const User = require("./model/User")
 
 const app = express();
 
@@ -11,6 +12,7 @@ const port = 3002
 
 app.use(express.json())
 app.use(cors())
+app.use(express.static('public'));
 
 mongoose.connect("mongodb://localhost:27017/blog").then(()=>{
  console.log("db connected")
@@ -19,7 +21,20 @@ mongoose.connect("mongodb://localhost:27017/blog").then(()=>{
 })
 
 app.get('/', function (req, res) {
-  res.send('Hello World')
+  res.sendFile('index.html');
+});
+
+app.post("/admin-login",async(req,res)=>{
+  try {
+    const user =  await User.findOne({email:email})
+    if (user) {
+      res.json({message:"user login"})
+    }else{
+      
+    }
+  } catch (error) {
+    
+  }
 })
 
 app.post("/add-table",async(req,res)=>{
