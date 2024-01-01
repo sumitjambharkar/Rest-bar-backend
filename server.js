@@ -1,20 +1,30 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require("cors")
+const cors = require("cors");
+const cookieParser = require('cookie-parser');
 const Table = require("./model/Table");
 const SaleReport = require("./model/SaleReport");
 const Product = require('./model/Product');
-const User = require("./model/User")
-
+const User = require("./model/User");
+const bcrypt = require("bcrypt");
+const jwt = require('jsonwebtoken');
 const app = express();
 
 const port = 3002
+const JWT_SECRET_KEY = "SDUIFYFFAHLDALFHFHFLSHFL"
 
 app.use(express.json())
-app.use(cors())
+app.use(
+  cors({
+    credentials: true,
+    origin: 'http://localhost:3000',
+  })
+);
 app.use(express.static('public'));
+app.use(cookieParser());
 
-mongoose.connect("mongodb://localhost:27017/blog").then(()=>{
+
+mongoose.connect("mongodb+srv://table:table@cluster0.8gsqxq9.mongodb.net/sumit").then(()=>{
  console.log("db connected")
 }).catch(()=>{
     console.log("not connect");
@@ -24,18 +34,75 @@ app.get('/', function (req, res) {
   res.sendFile('index.html');
 });
 
-app.post("/admin-login",async(req,res)=>{
+app.post("/admin-login", async (req, res) => {
+  const { email, password } = req.body;
+
   try {
-    const user =  await User.findOne({email:email})
+    // Check if the user with the provided email exists
+    const user = await User.findOne({ email });
+
     if (user) {
-      res.json({message:"user login"})
-    }else{
-      
+      // User found, compare passwords
+      const passwordMatch = await bcrypt.compare(password, user.password);
+
+      if (passwordMatch) {
+        const token = jwt.sign({id:user._id},JWT_SECRET_KEY,{expiresIn:"10m"})
+        res.cookie("JWT",token,{
+          path:'/',
+          expires: new Date(Date.now() + 1000 * 60 * 10),
+          httpOnly:true,
+          sameSite:"lax"
+        })
+        res.json({message:"Login",id:user._id,token})
+      } else {
+        res.json({ message: "Password does not match" });
+      }
+    } else {
+      // User not found, create a new admin user
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await User.create({
+        email,
+        password: hashedPassword,
+        role: "Admin",
+        status: "inActive"
+      });
+      res.json({ message: "Admin user created successfully" });
     }
   } catch (error) {
-    
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
-})
+});
+
+const verifyToken = (req, res, next) => {
+  const token = req.cookies.JWT;
+  if (!token) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  jwt.verify(token, JWT_SECRET_KEY, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    req.userId = decoded.id;
+    next();
+  });
+};
+
+app.get('/user', verifyToken, async (req, res) => {
+  try {
+    const id = req.userId;
+    console.log(id);
+    const user = await User.findById(id, '-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 
 app.post("/add-table",async(req,res)=>{
     try {
@@ -47,6 +114,15 @@ app.post("/add-table",async(req,res)=>{
     } catch (error) {
       res.json(error)
     }
+})
+
+app.get("/show-table",async(req,res)=>{
+  try {
+    const data = await Table.find()
+    res.json(data)
+  } catch (error) {
+    res.json(error)
+  }
 })
 
 app.get("/single-table",async(req,res)=>{
@@ -65,7 +141,7 @@ app.post("/create-product",async(req,res)=>{
         name:req.body.name,
         price:req.body.price
       })
-      res.json({message:"Created"})
+      res.json({message:"Product Created"})
     } catch (error) {
       res.json(error)
     }
@@ -91,14 +167,14 @@ app.get("/show-single-product",async(req,res)=>{
 })
 
 app.put("/update-single-product", async (req, res) => {
-  const { id } = req.query;
+  const { id ,name,price,isOnline} = req.body;
   try {
     const updatedProduct = await Product.findByIdAndUpdate(
       id,
       {
-        name: req.body.name,
-        price: req.body.price,
-        isOnline: req.body.on
+        name:name,
+        price:price,
+        isOnline:isOnline
       },
       { new: true }
     );
@@ -122,10 +198,9 @@ app.delete("/delete-single-product",async(req,res)=>{
    }
 })
 
-app.get("/single-table-delete",async(req,res)=>{
-  const {id} = req.query
+app.delete("/single-table-delete",async(req,res)=>{
   try {
-    await Table.findByIdAndDelete({_id:id})
+    await Table.findOneAndDelete({table:req.body.table})
     res.json({message:"Deleted Table"})
   } catch (error) {
     res.json(error)
@@ -133,9 +208,8 @@ app.get("/single-table-delete",async(req,res)=>{
 })
 
 app.post("/add-order", async (req, res) => {
-  const { id } = req.query;
   try {
-    const order = await Table.findById(id);
+    const order = await Table.findById({_id:req.body.id});
     if (order) {
       let itemFound = false;
       order.basket.forEach((item) => {
@@ -167,11 +241,10 @@ app.post("/add-order", async (req, res) => {
 });
 
 app.post("/basket-order-remove", async (req, res) => {
-  const { id } = req.query;
-  const { orderId } = req.body; 
+  const { orderId,id } = req.body; 
 
   try {
-    const order = await Table.findById(id);
+    const order = await Table.findById(id); 
 
     if (order) {
       order.basket = order.basket.filter((item) => item._id.toString() !== orderId.toString());
@@ -194,8 +267,7 @@ app.post("/basket-order-remove", async (req, res) => {
 });
 
 app.post("/basket-order-increment-decrement", async (req, res) => {
-  const { id } = req.query;
-  const { orderId, action } = req.body;
+  const { orderId, action,id } = req.body;
   try {
     const order = await Table.findById(id);
 
@@ -232,9 +304,7 @@ app.post("/basket-order-increment-decrement", async (req, res) => {
 });
 
 app.post("/payment-method", async (req, res) => {
-  const { id } = req.query;
-  const { paymentMethod, pickupAmount,returnAmount } = req.body;
-  
+  const { paymentMethod, pickupAmount,returnAmount,id } = req.body;
   try {
     const order = await Table.findById(id);
     if (order) {
@@ -242,16 +312,10 @@ app.post("/payment-method", async (req, res) => {
         table: order.table,
         basket: order.basket,
         totalAmount: order.totalAmount,
-        paymentMethod: order.paymentMethod,
-        pickupAmount: order.pickupAmount,
-        returnAmount: order.returnAmount
+        paymentMethod:paymentMethod,
+        pickupAmount:pickupAmount,
+        returnAmount:returnAmount
       };
-
-      order.paymentMethod = paymentMethod;
-      order.pickupAmount = pickupAmount;
-      order.returnAmount = returnAmount;
-
-      const updatedOrder = await order.save();
 
       await SaleReport.create(previousDetails);
 
@@ -266,7 +330,7 @@ app.post("/payment-method", async (req, res) => {
         }
       });
 
-      res.json(updatedOrder);
+      res.json(previousDetails);
     } else {
       res.status(404).json({ error: 'Order not found' });
     }
@@ -274,6 +338,15 @@ app.post("/payment-method", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+app.get("/sale-report",async(req,res)=>{
+  try {
+    const result = await SaleReport.find()
+    res.json(result)
+  } catch (error) {
+    res.json(error)
+  }
+})
 
 app.get("/delete",(req,res)=>{
   SaleReport.collection.drop((err, result) => {
