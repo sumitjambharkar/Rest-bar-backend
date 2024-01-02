@@ -4,13 +4,16 @@ const productSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      unique: true,
     },
     isOnline: {
       type: Boolean,
     },
     price: {
       type: Number,
+    },
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
     },
   },
   { timestamps: true }

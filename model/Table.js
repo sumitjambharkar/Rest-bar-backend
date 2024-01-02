@@ -3,8 +3,7 @@ const mongoose = require("mongoose");
 const tableSchema = new mongoose.Schema(
   {
     table: {
-      type: String,
-      unique: true,
+      type:Number,
     },
     isOnline: {
       type: Boolean,
@@ -36,7 +35,12 @@ const tableSchema = new mongoose.Schema(
     },
     returnAmount:{
         type: Number,
-    }
+    },
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+
   },
   { timestamps: true }
 );

@@ -24,7 +24,7 @@ app.use(express.static('public'));
 app.use(cookieParser());
 
 
-mongoose.connect("mongodb+srv://table:table@cluster0.8gsqxq9.mongodb.net/sumit").then(()=>{
+mongoose.connect("mongodb+srv://table:table@cluster0.8gsqxq9.mongodb.net").then(()=>{
  console.log("db connected")
 }).catch(()=>{
     console.log("not connect");
@@ -92,7 +92,6 @@ const verifyToken = (req, res, next) => {
 app.get('/user', verifyToken, async (req, res) => {
   try {
     const id = req.userId;
-    console.log(id);
     const user = await User.findById(id, '-password');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -104,11 +103,12 @@ app.get('/user', verifyToken, async (req, res) => {
 });
 
 
-app.post("/add-table",async(req,res)=>{
+app.post("/add-table",verifyToken,async(req,res)=>{
     try {
       await Table.create({
         table:req.body.table,
-        isOnline:false
+        isOnline:false,
+        author:req.userId
       })
       res.json("created")
     } catch (error) {
@@ -116,14 +116,14 @@ app.post("/add-table",async(req,res)=>{
     }
 })
 
-app.get("/show-table",async(req,res)=>{
+app.get("/show-table", verifyToken, async (req, res) => {
   try {
-    const data = await Table.find()
-    res.json(data)
+    const data = await Table.find({ author: req.userId }).populate('author');
+    res.json(data);
   } catch (error) {
-    res.json(error)
+    res.json(error);
   }
-})
+});
 
 app.get("/single-table",async(req,res)=>{
   const {id} = req.query
@@ -135,11 +135,13 @@ app.get("/single-table",async(req,res)=>{
   }
 })
 
-app.post("/create-product",async(req,res)=>{
+app.post("/create-product",verifyToken,async(req,res)=>{
     try {
       await Product.create({
         name:req.body.name,
-        price:req.body.price
+        price:req.body.price,
+        author:req.userId,
+        isOnline:true
       })
       res.json({message:"Product Created"})
     } catch (error) {
@@ -147,9 +149,9 @@ app.post("/create-product",async(req,res)=>{
     }
 })
 
-app.get("/show-all-product",async(req,res)=>{
+app.get("/show-all-product",verifyToken,async(req,res)=>{
   try {
-    const data = await Product.find()
+    const data = await Product.find({author:req.userId}).populate("author")
     res.json(data)
   } catch (error) {
     res.json(error)
@@ -303,7 +305,7 @@ app.post("/basket-order-increment-decrement", async (req, res) => {
   }
 });
 
-app.post("/payment-method", async (req, res) => {
+app.post("/payment-method",verifyToken, async (req, res) => {
   const { paymentMethod, pickupAmount,returnAmount,id } = req.body;
   try {
     const order = await Table.findById(id);
@@ -314,7 +316,8 @@ app.post("/payment-method", async (req, res) => {
         totalAmount: order.totalAmount,
         paymentMethod:paymentMethod,
         pickupAmount:pickupAmount,
-        returnAmount:returnAmount
+        returnAmount:returnAmount,
+        author:req.userId
       };
 
       await SaleReport.create(previousDetails);
@@ -339,9 +342,9 @@ app.post("/payment-method", async (req, res) => {
   }
 });
 
-app.get("/sale-report",async(req,res)=>{
+app.get("/sale-report",verifyToken,async(req,res)=>{
   try {
-    const result = await SaleReport.find()
+    const result = await SaleReport.find({author:req.userId}).populate("author")
     res.json(result)
   } catch (error) {
     res.json(error)
