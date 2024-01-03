@@ -64,13 +64,60 @@ app.post("/admin-login", async (req, res) => {
         email,
         password: hashedPassword,
         role: "Admin",
-        status: "inActive"
+        status: "Active"
       });
       res.json({ message: "Admin user created successfully" });
     }
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.get("/show-users",async(req,res)=>{
+   try {
+    const users = await User.find()
+    res.json(users)
+   } catch (error) {
+    res.json({message:error})
+   }
+})
+
+app.put("/update/user", async (req, res) => {
+  const { id ,status} = req.body;
+  try {
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      {
+        status:status
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+app.delete("/delete/user/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const deletedUser = await User.findByIdAndDelete(id);
+
+    if (!deletedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
@@ -201,6 +248,7 @@ app.delete("/delete-single-product",async(req,res)=>{
 })
 
 app.delete("/single-table-delete",async(req,res)=>{
+  console.log(req.body);
   try {
     await Table.findOneAndDelete({table:req.body.table})
     res.json({message:"Deleted Table"})
