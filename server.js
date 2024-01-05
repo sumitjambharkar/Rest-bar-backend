@@ -8,10 +8,12 @@ const Product = require('./model/Product');
 const User = require("./model/User");
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv')
+dotenv.config()
 const app = express();
 
-const port = 3002
-const JWT_SECRET_KEY = "SDUIFYFFAHLDALFHFHFLSHFL"
+const port = process.env.PORT
+
 
 app.use(express.json())
 app.use(
@@ -24,7 +26,7 @@ app.use(express.static('public'));
 app.use(cookieParser());
 
 
-mongoose.connect("mongodb+srv://table:table@cluster0.8gsqxq9.mongodb.net").then(()=>{
+mongoose.connect(process.env.DATABASE).then(()=>{
  console.log("db connected")
 }).catch(()=>{
     console.log("not connect");
@@ -46,7 +48,7 @@ app.post("/admin-login", async (req, res) => {
       const passwordMatch = await bcrypt.compare(password, user.password);
 
       if (passwordMatch) {
-        const token = jwt.sign({id:user._id},JWT_SECRET_KEY,{expiresIn:"10m"})
+        const token = jwt.sign({id:user._id},process.env.JWT_SECRET_KEY,{expiresIn:"10m"})
         res.cookie("JWT",token,{
           path:'/',
           expires: new Date(Date.now() + 1000 * 60 * 10),
@@ -127,7 +129,7 @@ const verifyToken = (req, res, next) => {
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
-  jwt.verify(token, JWT_SECRET_KEY, (err, decoded) => {
+  jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
     if (err) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
@@ -148,7 +150,6 @@ app.get('/user', verifyToken, async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 app.post("/add-table",verifyToken,async(req,res)=>{
     try {
@@ -247,15 +248,20 @@ app.delete("/delete-single-product",async(req,res)=>{
    }
 })
 
-app.delete("/single-table-delete",async(req,res)=>{
-  console.log(req.body);
+app.delete("/single-table-delete", verifyToken, async (req, res) => {
   try {
-    await Table.findOneAndDelete({table:req.body.table})
-    res.json({message:"Deleted Table"})
+    const result = await Table.findOneAndDelete({ table:req.body.table,author:req.userId});
+
+    if (!result) {
+      return res.status(404).json({ message: "No matching record found for deletion" });
+    }
+
+    res.json({ message: "Deleted Table" });
   } catch (error) {
-    res.json(error)
+    res.status(500).json(error.message);
   }
-})
+});
+
 
 app.post("/add-order", async (req, res) => {
   try {
