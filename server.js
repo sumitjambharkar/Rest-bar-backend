@@ -18,6 +18,7 @@ const port = process.env.PORT
 
 app.use(express.json())
 app.use(bodyParser.urlencoded({ extended: false }))
+app.use(cookieParser());
 app.use(
   cors({
     credentials: true,
@@ -25,15 +26,26 @@ app.use(
   })
 );
 
-
-app.use(cookieParser());
-
-
 mongoose.connect(process.env.DATABASE).then(()=>{
  console.log("db connected")
 }).catch(()=>{
     console.log("not connect");
 })
+
+const verifyToken = (req, res, next) => {
+  const token = req.cookies.JWT;
+  if (!token) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    req.userId = decoded.id;
+    next();
+  });
+};
 
 app.get('/', function (req, res) {
   res.send('Hello World');
@@ -126,21 +138,6 @@ app.delete("/delete/user/:id", async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
-
-const verifyToken = (req, res, next) => {
-  const token = req.cookies.JWT;
-  if (!token) {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
-    if (err) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-    req.userId = decoded.id;
-    next();
-  });
-};
 
 app.get('/user', verifyToken, async (req, res) => {
   try {
