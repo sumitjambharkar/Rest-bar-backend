@@ -33,7 +33,7 @@ mongoose.connect(process.env.DATABASE).then(()=>{
 })
 
 app.get('/', function (req, res) {
-  res.sendFile('index.html');
+  res.send('Hello World');
 });
 
 app.post("/admin-login", async (req, res) => {
