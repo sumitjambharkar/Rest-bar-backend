@@ -54,7 +54,8 @@ app.post("/admin-login", async (req, res) => {
           path:'/',
           expires: new Date(Date.now() + 1000 * 60 * 10),
           httpOnly:true,
-          sameSite:"lax"
+          sameSite:"lax",
+          secure:true
         })
         res.json({message:"Login",id:user._id,token})
       } else {
