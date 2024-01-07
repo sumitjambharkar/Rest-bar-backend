@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require("cors");
 const cookieParser = require('cookie-parser');
+const bodyParser = require('body-parser')
 const Table = require("./model/Table");
 const SaleReport = require("./model/SaleReport");
 const Product = require('./model/Product');
@@ -16,6 +17,7 @@ const port = process.env.PORT
 
 
 app.use(express.json())
+app.use(bodyParser.urlencoded({ extended: false }))
 app.use(
   cors({
     credentials: true,
