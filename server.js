@@ -22,7 +22,8 @@ app.use(
     origin: 'http://localhost:3000',
   })
 );
-app.use(express.static('public'));
+
+
 app.use(cookieParser());
 
 
