@@ -32,9 +32,9 @@ mongoose.connect(process.env.DATABASE).then(()=>{
     console.log("not connect");
 })
 
-app.get('/', function (req, res) {
-  res.sendFile('index.html');
-});
+// app.get('/', function (req, res) {
+//   res.sendFile('index.html');
+// });
 
 app.post("/admin-login", async (req, res) => {
   const { email, password } = req.body;
