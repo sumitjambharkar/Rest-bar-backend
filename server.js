@@ -22,7 +22,7 @@ app.use(
     origin: ['http://localhost:3000','https://cafedinner.com'],
   })
 );
-app.use(express.static('public'));
+
 app.use(cookieParser());
 
 
