@@ -16,6 +16,7 @@ const port = process.env.PORT
 
 
 app.use(express.json())
+app.use(cookieParser());
 app.use(
   cors({
     credentials: true,
@@ -23,7 +24,7 @@ app.use(
   })
 );
 app.use(express.static('public'));
-app.use(cookieParser());
+
 
 
 mongoose.connect(process.env.DATABASE)
@@ -50,7 +51,7 @@ app.post("/admin-login", async (req, res) => {
       const passwordMatch = await bcrypt.compare(password, user.password);
 
       if (passwordMatch) {
-        const token = jwt.sign({id:user._id},process.env.JWT_SECRET_KEY,{expiresIn:"10m"})
+        const token = jwt.sign({id:user._id},process.env.JWT_SECRET_KEY,{expiresIn:"2h"})
         res.cookie("JWT",token,{
           path:'/',
           expires: new Date(Date.now() + 1000 * 60 * 10),
@@ -94,9 +95,9 @@ const verifyToken = (req, res, next) => {
   });
 };
 
-app.get('/user', verifyToken, async (req, res) => {
+app.get('/user/:id', async (req, res) => {
   try {
-    const id = req.userId;
+    const {id} = req.params
     const user = await User.findById(id, '-password');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -155,7 +156,7 @@ app.delete("/delete/user/:id", async (req, res) => {
 });
 
 
-app.post("/add-table",verifyToken,async(req,res)=>{
+app.post("/add-table",async(req,res)=>{
     try {
       await Table.create({
         table:req.body.table,
@@ -168,7 +169,7 @@ app.post("/add-table",verifyToken,async(req,res)=>{
     }
 })
 
-app.get("/show-table", verifyToken, async (req, res) => {
+app.get("/show-table", async (req, res) => {
   try {
     const data = await Table.find({ author: req.userId }).populate('author');
     res.json(data);
@@ -187,7 +188,7 @@ app.get("/single-table",async(req,res)=>{
   }
 })
 
-app.post("/create-product",verifyToken,async(req,res)=>{
+app.post("/create-product",async(req,res)=>{
     try {
       await Product.create({
         name:req.body.name,
@@ -201,7 +202,7 @@ app.post("/create-product",verifyToken,async(req,res)=>{
     }
 })
 
-app.get("/show-all-product",verifyToken,async(req,res)=>{
+app.get("/show-all-product",async(req,res)=>{
   try {
     const data = await Product.find({author:req.userId}).populate("author")
     res.json(data)
@@ -252,7 +253,7 @@ app.delete("/delete-single-product",async(req,res)=>{
    }
 })
 
-app.delete("/single-table-delete", verifyToken, async (req, res) => {
+app.delete("/single-table-delete", async (req, res) => {
   try {
     const result = await Table.findOneAndDelete({ table:req.body.table,author:req.userId});
 
@@ -363,7 +364,7 @@ app.post("/basket-order-increment-decrement", async (req, res) => {
   }
 });
 
-app.post("/payment-method",verifyToken, async (req, res) => {
+app.post("/payment-method", async (req, res) => {
   const { paymentMethod, pickupAmount,returnAmount,id } = req.body;
   try {
     const order = await Table.findById(id);
@@ -400,7 +401,7 @@ app.post("/payment-method",verifyToken, async (req, res) => {
   }
 });
 
-app.get("/sale-report",verifyToken,async(req,res)=>{
+app.get("/sale-report",async(req,res)=>{
   try {
     const result = await SaleReport.find({author:req.userId}).populate("author")
     res.json(result)
