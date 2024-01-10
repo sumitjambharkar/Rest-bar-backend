@@ -22,18 +22,20 @@ app.use(
     origin: ['http://localhost:3000','https://cafedinner.com'],
   })
 );
-
+app.use(express.static('public'));
 app.use(cookieParser());
 
 
-mongoose.connect(process.env.DATABASE).then(()=>{
- console.log("db connected")
-}).catch(()=>{
-    console.log("not connect");
-})
+mongoose.connect(process.env.DATABASE)
+.then(() => {
+    console.log("db connected");
+}).catch((err) => {
+    console.error("db connection error:", err);
+});
+
 
 app.get('/', function (req, res) {
-  res.send('Hello World');
+  res.sendFile('index.html');
 });
 
 app.post("/admin-login", async (req, res) => {
