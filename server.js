@@ -55,6 +55,7 @@ app.post("/admin-login", async (req, res) => {
           path:'/',
           expires: new Date(Date.now() + 1000 * 60 * 10),
           httpOnly:true,
+          secure: true,
           sameSite:"lax"
         })
         res.json({message:"Login",id:user._id,token})
@@ -92,6 +93,19 @@ const verifyToken = (req, res, next) => {
     next();
   });
 };
+
+app.get('/user', verifyToken, async (req, res) => {
+  try {
+    const id = req.userId;
+    const user = await User.findById(id, '-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 app.get("/show-users",async(req,res)=>{
    try {
@@ -140,18 +154,6 @@ app.delete("/delete/user/:id", async (req, res) => {
   }
 });
 
-app.get('/user', verifyToken, async (req, res) => {
-  try {
-    const id = req.userId;
-    const user = await User.findById(id, '-password');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    res.json(user);
-  } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
 
 app.post("/add-table",verifyToken,async(req,res)=>{
     try {
