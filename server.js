@@ -2,7 +2,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require("cors");
 const cookieParser = require('cookie-parser');
-const bodyParser = require('body-parser')
 const Table = require("./model/Table");
 const SaleReport = require("./model/SaleReport");
 const Product = require('./model/Product');
@@ -17,35 +16,21 @@ const port = process.env.PORT
 
 
 app.use(express.json())
-app.use(bodyParser.urlencoded({ extended: false }))
-app.use(cookieParser());
 app.use(
   cors({
     credentials: true,
-    origin: 'http://localhost:3000',
+    origin: ['http://localhost:3000','https://cafedinner.com'],
   })
 );
+app.use(express.static('public'));
+app.use(cookieParser());
+
 
 mongoose.connect(process.env.DATABASE).then(()=>{
  console.log("db connected")
 }).catch(()=>{
     console.log("not connect");
 })
-
-const verifyToken = (req, res, next) => {
-  const token = req.cookies.JWT;
-  if (!token) {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
-    if (err) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-    req.userId = decoded.id;
-    next();
-  });
-};
 
 app.get('/', function (req, res) {
   res.send('Hello World');
@@ -68,8 +53,7 @@ app.post("/admin-login", async (req, res) => {
           path:'/',
           expires: new Date(Date.now() + 1000 * 60 * 10),
           httpOnly:true,
-          sameSite:"lax",
-          secure:true
+          sameSite:"lax"
         })
         res.json({message:"Login",id:user._id,token})
       } else {
@@ -92,12 +76,27 @@ app.post("/admin-login", async (req, res) => {
   }
 });
 
+const verifyToken = (req, res, next) => {
+  const token = req.cookies.JWT;
+  if (!token) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    req.userId = decoded.id;
+    next();
+  });
+};
+
 app.get("/show-users",async(req,res)=>{
    try {
     const users = await User.find()
     res.json(users)
    } catch (error) {
-    res.json({message:"error"})
+    res.json({message:error})
    }
 })
 
