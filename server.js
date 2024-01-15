@@ -8,7 +8,8 @@ const Product = require('./model/Product');
 const User = require("./model/User");
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
-const dotenv = require('dotenv')
+const dotenv = require('dotenv');
+const Locat = require("./model/Location")
 dotenv.config()
 const app = express();
 
@@ -36,7 +37,7 @@ mongoose.connect(process.env.DATABASE)
 
 app.post('/user/location',async(req,res)=>{
   try {
-    const location = await Location.create({
+    const location = await Locat.create({
       latitude:req.body.latitude,
       longitude:req.body.longitude
     })
