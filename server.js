@@ -21,7 +21,7 @@ app.use(cookieParser());
 app.use(
   cors({
     credentials: true,
-    origin: ['http://localhost:3000','https://cafedinner.com'],
+    origin: ['http://localhost:5500','https://cafedinner.com'],
   })
 );
 app.use(express.static('public'));
@@ -36,6 +36,7 @@ mongoose.connect(process.env.DATABASE)
 });
 
 app.post('/user/location',async(req,res)=>{
+  console.log(req.body);
   try {
     const location = await Locat.create({
       latitude:req.body.latitude,
