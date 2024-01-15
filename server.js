@@ -34,6 +34,18 @@ mongoose.connect(process.env.DATABASE)
     console.error("db connection error:", err);
 });
 
+app.post('/user/location',async(req,res)=>{
+  try {
+    const location = await Location.create({
+      latitude:req.body.latitude,
+      longitude:req.body.longitude
+    })
+    res.json(location)
+  } catch (error) {
+    res.json(error.message)
+  }
+})
+
 
 app.get('/', function (req, res) {
   res.sendFile('index.html');
