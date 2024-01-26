@@ -21,7 +21,7 @@ app.use(cookieParser());
 app.use(
   cors({
     credentials: true,
-    origin: ['http://localhost:5500','https://cafedinner.com'],
+    origin: ['http://localhost:3000','http://localhost:5173','https://cafedinner.com'],
   })
 );
 app.use(express.static('public'));
@@ -55,6 +55,7 @@ app.get('/', function (req, res) {
 
 app.post("/admin-login", async (req, res) => {
   const { email, password } = req.body;
+  console.log(email,password);
 
   try {
     // Check if the user with the provided email exists
@@ -73,9 +74,9 @@ app.post("/admin-login", async (req, res) => {
           secure: true,
           sameSite:"lax"
         })
-        res.json({message:"Login",id:user._id,token})
+        res.status(200).json({message:"Login",id:user._id,token})
       } else {
-        res.json({ message: "Password does not match" });
+        res.status(300).json({ message: "Password does not match" });
       }
     } else {
       // User not found, create a new admin user
@@ -86,7 +87,7 @@ app.post("/admin-login", async (req, res) => {
         role: "Admin",
         status: "Active"
       });
-      res.json({ message: "Admin user created successfully" });
+      res.status(200).json({ message: "Admin user created successfully" });
     }
   } catch (error) {
     console.error(error);
@@ -225,8 +226,8 @@ app.get("/show-all-product",async(req,res)=>{
   }
 })
 
-app.get("/show-single-product",async(req,res)=>{
-  const {id} = req.query
+app.get("/show-single-product/:id",async(req,res)=>{
+  const {id} = req.params
   try {
     const data = await Product.findById({_id:id})
     res.json(data)
