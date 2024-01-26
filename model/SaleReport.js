@@ -36,6 +36,9 @@ const saleReportSchema = new mongoose.Schema(
     returnAmount:{
         type: Number,
     },
+    user : {
+      type: String,
+    },
     author: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'

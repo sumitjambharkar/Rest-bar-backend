@@ -176,7 +176,7 @@ app.post("/add-table",async(req,res)=>{
       await Table.create({
         table:req.body.table,
         isOnline:false,
-        author:req.userId
+        author:req.body.userId
       })
       res.json("created")
     } catch (error) {
@@ -186,13 +186,13 @@ app.post("/add-table",async(req,res)=>{
 
 app.get("/show-table", async (req, res) => {
   try {
-    const data = await Table.find({ author: req.userId }).populate('author');
+    const data = await Table.find({ author: req.query.userId }).populate('author');
     res.json(data);
   } catch (error) {
     res.json(error);
   }
 });
-
+ 
 app.get("/single-table",async(req,res)=>{
   const {id} = req.query
   try {
@@ -236,6 +236,20 @@ app.get("/show-single-product/:id",async(req,res)=>{
   }
 })
 
+app.put("/show-single-product", async (req, res) => {
+  const { id, isOnline } = req.body;
+  try {
+    const data = await Product.findByIdAndUpdate(
+      { _id: id },
+      { isOnline },
+      { new: true }
+    );
+    res.json(data);
+  } catch (error) {
+    res.json(error);
+  }
+});
+
 app.put("/update-single-product", async (req, res) => {
   const { id ,name,price,isOnline} = req.body;
   try {
@@ -270,7 +284,7 @@ app.delete("/delete-single-product",async(req,res)=>{
 
 app.delete("/single-table-delete", async (req, res) => {
   try {
-    const result = await Table.findOneAndDelete({ table:req.body.table,author:req.userId});
+    const result = await Table.findOneAndDelete({ table:req.body.table,author:req.body.userId});
 
     if (!result) {
       return res.status(404).json({ message: "No matching record found for deletion" });
@@ -380,7 +394,7 @@ app.post("/basket-order-increment-decrement", async (req, res) => {
 });
 
 app.post("/payment-method", async (req, res) => {
-  const { paymentMethod, pickupAmount,returnAmount,id } = req.body;
+  const { paymentMethod, pickupAmount,returnAmount,id ,userId,user} = req.body;
   try {
     const order = await Table.findById(id);
     if (order) {
@@ -391,7 +405,8 @@ app.post("/payment-method", async (req, res) => {
         paymentMethod:paymentMethod,
         pickupAmount:pickupAmount,
         returnAmount:returnAmount,
-        author:req.userId
+        author:userId,
+        user:user
       };
 
       await SaleReport.create(previousDetails);
