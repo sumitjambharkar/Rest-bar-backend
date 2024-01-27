@@ -208,7 +208,7 @@ app.post("/create-product",async(req,res)=>{
       await Product.create({
         name:req.body.name,
         price:req.body.price,
-        author:req.userId,
+        author:req.body.userId,
         isOnline:true
       })
       res.json({message:"Product Created"})
@@ -218,8 +218,9 @@ app.post("/create-product",async(req,res)=>{
 })
 
 app.get("/show-all-product",async(req,res)=>{
+  console.log(req.query);
   try {
-    const data = await Product.find({author:req.userId}).populate("author")
+    const data = await Product.find({author:req.query.userId}).populate("author")
     res.json(data)
   } catch (error) {
     res.json(error)
@@ -433,7 +434,7 @@ app.post("/payment-method", async (req, res) => {
 
 app.get("/sale-report",async(req,res)=>{
   try {
-    const result = await SaleReport.find({author:req.userId}).populate("author")
+    const result = await SaleReport.find({author:req.query.userId}).populate("author")
     res.json(result)
   } catch (error) {
     res.json(error)
