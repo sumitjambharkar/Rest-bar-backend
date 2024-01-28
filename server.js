@@ -10,6 +10,7 @@ const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const Locat = require("./model/Location")
+
 dotenv.config()
 const app = express();
 
@@ -432,14 +433,22 @@ app.post("/payment-method", async (req, res) => {
   }
 });
 
-app.get("/sale-report",async(req,res)=>{
+app.get("/sale-report", async (req, res) => {
   try {
-    const result = await SaleReport.find({author:req.query.userId}).populate("author")
-    res.json(result)
+    const today = new Date();
+    today.setHours(1, 0, 0, 0);
+    const result = await SaleReport.find({
+      author: req.query.userId,
+      createdAt: { $gte: today, $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000) },
+    }).populate("author");
+
+    res.json(result);
   } catch (error) {
-    res.json(error)
+    res.json(error);
   }
-})
+});
+
+
 
 app.get("/delete",(req,res)=>{
   SaleReport.collection.drop((err, result) => {
