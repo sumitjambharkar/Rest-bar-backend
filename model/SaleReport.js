@@ -43,6 +43,12 @@ const saleReportSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
     },
+    customer:{
+      type: String,
+    },
+    number : {
+      type: Number,
+    }
   },
   { timestamps: true }
 );
