@@ -11,6 +11,7 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const Locat = require("./model/Location");
 const axios = require('axios')
+const { v4: uuidv4 } = require('uuid');
 
 dotenv.config();
 const app = express();
@@ -184,6 +185,7 @@ app.post("/add-table", async (req, res) => {
       table: req.body.table,
       isOnline: false,
       author: req.body.userId,
+      productId:uuidv4()
     });
     res.json("created");
   } catch (error) {
@@ -424,8 +426,7 @@ app.post("/basket-order-increment-decrement", async (req, res) => {
   }
 });
 
-const sendMessage = async({customer,number,total,id}) => {
-  console.log({customer,number,total,id});
+const sendMessage = async({customer,number,total,uid}) => {
   const url = 'https://www.fast2sms.com/dev/bulkV2';
   const apiKey = 'aXRydJKo7ObpnHj4UGN1V2qckTLt0viF5lBx6uwC8zS9MmY3EeQgYIPK9Oa7oBtzr4TUGFwR8keS0lpJ'; // Replace with your Fast2SMS API key
   
@@ -434,7 +435,7 @@ const sendMessage = async({customer,number,total,id}) => {
     'Content-Type': 'application/json'
   };
 
-  const urlLink =`https://cafedinner.com/sale-report/${id}`;
+  const urlLink =`https://cafedinner.com/sale-report/${uid}`;
 
   
   const data = {
@@ -458,10 +459,10 @@ app.post("/payment-method", async (req, res) => {
     returnAmount,
     id,
     userId,
-    user,
     customer,
     number,
   } = req.body;
+  console.log(req.body);
   try {
     const order = await Table.findById(id);
     if (order) {
@@ -473,13 +474,14 @@ app.post("/payment-method", async (req, res) => {
         pickupAmount: pickupAmount,
         returnAmount: returnAmount,
         author: userId,
-        user: user,
+        id:id,
         customer: customer,
         number: number,
+        productId:order.productId
       };
       let total = order.totalAmount
+      let uid = order.productId
       await SaleReport.create(previousDetails);
-
       await Table.findByIdAndUpdate(id, {
         $set: { isOnline: false },
         $unset: {
@@ -488,9 +490,10 @@ app.post("/payment-method", async (req, res) => {
           paymentMethod: "",
           pickupAmount: "",
           returnAmount: "",
+          productId:""
         },
       });
-      await sendMessage({total,number,customer,id})
+      await sendMessage({total,number,customer,uid})
       res.json(previousDetails);
     } else {
       res.status(404).json({ error: "Order not found" });
@@ -530,11 +533,11 @@ app.get("/delete", (req, res) => {
   });
 });
 
-app.get("/sale-product/:id", async (req, res) => {
+app.get("/sale-product", async (req, res) => {
   try {
-    const saleReportId = req.params.id;
-
-    const saleReport = await SaleReport.findById(saleReportId);
+    console.log(req.query.productId);
+    
+    const saleReport = await SaleReport.findOne({productId:req.query.productId});
 
     if (!saleReport) {
       return res.status(404).json({ error: "Sale report not found" });

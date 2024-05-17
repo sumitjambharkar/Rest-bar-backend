@@ -48,6 +48,9 @@ const saleReportSchema = new mongoose.Schema(
     },
     number : {
       type: Number,
+    },
+    productId: {
+      type: String,
     }
   },
   { timestamps: true }

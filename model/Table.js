@@ -8,6 +8,9 @@ const tableSchema = new mongoose.Schema(
     isOnline: {
       type: Boolean,
     },
+    productId : {
+      type:String
+    },
     basket: [
       {
         name: {
