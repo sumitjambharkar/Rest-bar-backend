@@ -10,6 +10,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const Locat = require("./model/Location");
+const axios = require('axios')
 
 dotenv.config();
 const app = express();
