@@ -445,8 +445,7 @@ const sendMessage = async({customer,number,total,id}) => {
   };
   
   try {
-    const response = await axios.post(url, data, { headers });
-    console.log(response);
+    await axios.post(url, data, { headers });
   } catch (error) {
     console.error('Error:', error);
   }
