@@ -12,6 +12,7 @@ const dotenv = require("dotenv");
 const Locat = require("./model/Location");
 const axios = require('axios')
 const { v4: uuidv4 } = require('uuid');
+const Address = require("./model/Address")
 
 dotenv.config();
 const app = express();
@@ -61,8 +62,7 @@ app.get("/", function (req, res) {
 });
 
 app.post("/admin-login", async (req, res) => {
-  const { email, password } = req.body;
-  console.log(email, password);
+  const { email, password,userName } = req.body;
 
   try {
     // Check if the user with the provided email exists
@@ -73,7 +73,7 @@ app.post("/admin-login", async (req, res) => {
       const passwordMatch = await bcrypt.compare(password, user.password);
 
       if (passwordMatch) {
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET_KEY, {
+        const token = jwt.sign({ id: user._id,user:user.userName }, process.env.JWT_SECRET_KEY, {
           expiresIn: "2h",
         });
         res.cookie("JWT", token, {
@@ -92,6 +92,7 @@ app.post("/admin-login", async (req, res) => {
       const hashedPassword = await bcrypt.hash(password, 10);
       await User.create({
         email,
+        userName,
         password: hashedPassword,
         role: "Admin",
         status: "Active",
@@ -550,6 +551,42 @@ app.get("/sale-product", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+
+app.post('/update-or-add-address', async (req, res) => {
+  const { name, address, number, gst, author } = req.body;
+
+  try {
+      let existingAddress;
+      if (author) {
+          existingAddress = await Address.findOneAndUpdate({ author }, { name, address, number, gst }, { new: true });
+          if (!existingAddress) {
+              return res.status(404).json({ message: 'Address not found' });
+          }
+          return res.status(200).json({ message: 'Address updated successfully', data: existingAddress });
+      } else {
+          const newAddress = new Address({ name, address, number, gst, author });
+          await newAddress.save();
+          return res.status(201).json({ message: 'Address added successfully', data: newAddress });
+      }
+  } catch (error) {
+      console.error('Failed to update or add address:', error);
+      res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+app.get("/show-address/:id",async(req,res)=>{
+  try {
+    const result = await Address.findOne({author:req.params.id})
+    res.json(result);
+  } catch (error) {
+    res.json(error)
+  }
+}) 
+
+
+
 
 app.listen(port, () => {
   console.log("server Start");
