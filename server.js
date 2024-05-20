@@ -298,22 +298,25 @@ app.delete("/delete-single-product", async (req, res) => {
 
 app.delete("/single-table-delete", async (req, res) => {
   try {
-    const result = await Table.findOneAndDelete({
-      table: req.body.table,
-      author: req.body.userId,
-    });
+    // Extracting table and author from the request body
+    const { table, author } = req.body;
 
+    // Finding and deleting the record
+    const result = await Table.findOneAndDelete({ table, author });
+
+    // If no matching record was found
     if (!result) {
-      return res
-        .status(404)
-        .json({ message: "No matching record found for deletion" });
+      return res.status(404).json({ message: "No matching record found for deletion" });
     }
 
+    // If record was found and deleted
     res.json({ message: "Deleted Table" });
   } catch (error) {
-    res.status(500).json(error.message);
+    // Handling any errors
+    res.status(500).json({ message: error.message });
   }
 });
+
 
 app.post("/add-order", async (req, res) => {
   try {
