@@ -463,7 +463,6 @@ app.post("/payment-method", async (req, res) => {
     customer,
     number,
   } = req.body;
-  console.log(req.body);
   try {
     const order = await Table.findById(id);
     if (order) {
@@ -493,6 +492,7 @@ app.post("/payment-method", async (req, res) => {
           returnAmount: "",
           productId:""
         },
+        
       });
       await sendMessage({total,number,customer,uid})
       res.json(previousDetails);
