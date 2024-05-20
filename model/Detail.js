@@ -1,25 +1,22 @@
 const mongoose = require('mongoose');
 
-const addressSchema = new mongoose.Schema({
+const DetailSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    trim: true
+    
   },
   address: {
     type: String,
     required: true,
-    trim: true
   },
   gst: {
     type: String,
     required: true,
-    trim: true
   },
   number: {
     type: String,
     required: true,
-    trim: true
   },
   author: {
     type: mongoose.Schema.Types.ObjectId,
@@ -30,4 +27,4 @@ const addressSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('Address', addressSchema);
+module.exports = mongoose.model('Detail', DetailSchema);

@@ -12,7 +12,7 @@ const dotenv = require("dotenv");
 const Locat = require("./model/Location");
 const axios = require('axios')
 const { v4: uuidv4 } = require('uuid');
-const Address = require("./model/Address")
+const Detail = require("./model/Detail")
 
 dotenv.config();
 const app = express();
@@ -552,32 +552,48 @@ app.get("/sale-product", async (req, res) => {
 });
 
 
-app.post('/update-or-add-address', async (req, res) => {
-  const { name, address, number, gst, author } = req.body;
-
+app.post("/add-address",async(req,res)=>{
   try {
-      let existingAddress;
-      if (author) {
-          existingAddress = await Address.findOneAndUpdate({ author }, { name, address, number, gst }, { new: true });
-          if (!existingAddress) {
-              return res.status(404).json({ message: 'Address not found' });
-          }
-          return res.status(200).json({ message: 'Address updated successfully', data: existingAddress });
-      } else {
-          const newAddress = new Address({ name, address, number, gst, author });
-          await newAddress.save();
-          return res.status(201).json({ message: 'Address added successfully', data: newAddress });
-      }
+    await Detail.create({
+      name: req.body.name,
+      address:req.body.address,
+      gst: req.body.gst,
+      number:req.body.number,
+      author:req.body.author
+      
+    });
+    res.json("created Address");
   } catch (error) {
-      console.error('Failed to update or add address:', error);
-      res.status(500).json({ message: 'Server error' });
+    res.json(error);
+  }
+})
+
+app.put("/update-address/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const updatedData = {
+      name: req.body.name,
+      address: req.body.address,
+      gst: req.body.gst,
+      number: req.body.number,
+      author: req.body.author
+    };
+
+    const detail = await Detail.findOneAndUpdate({author:id}, updatedData, { new: true });
+
+    if (!detail) {
+      return res.status(404).json({ error: "Address not found" });
+    }
+
+    res.json("Updated Address");
+  } catch (error) {
+    res.status(500).json(error);
   }
 });
 
-
 app.get("/show-address/:id",async(req,res)=>{
   try {
-    const result = await Address.findOne({author:req.params.id})
+    const result = await Detail.findOne({author:req.params.id})
     res.json(result);
   } catch (error) {
     res.json(error)
