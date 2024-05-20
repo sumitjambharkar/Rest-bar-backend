@@ -62,7 +62,7 @@ app.get("/", function (req, res) {
 });
 
 app.post("/admin-login", async (req, res) => {
-  const { email, password,userName } = req.body;
+  const { email, password } = req.body;
 
   try {
     // Check if the user with the provided email exists
@@ -73,7 +73,7 @@ app.post("/admin-login", async (req, res) => {
       const passwordMatch = await bcrypt.compare(password, user.password);
 
       if (passwordMatch) {
-        const token = jwt.sign({ id: user._id,user:user.userName }, process.env.JWT_SECRET_KEY, {
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET_KEY, {
           expiresIn: "2h",
         });
         res.cookie("JWT", token, {
