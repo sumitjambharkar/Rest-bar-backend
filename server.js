@@ -30,7 +30,8 @@ app.use(
       "http://localhost:3000",
       "http://localhost:5173",
       "https://cafedinner.com",
-      "https://rest-bar-backend.onrender.com"
+      "https://rest-bar-backend.onrender.com",
+      "https://cafe-vxa9.vercel.app"
     ],
   })
 );
