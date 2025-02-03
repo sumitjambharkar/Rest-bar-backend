@@ -1,7 +1,7 @@
 const showUser = async () => {
     let list = "";
     try {
-        const result = await axios.get("https://rest-bar-backend.vercel.app/show-users");
+        const result = await axios.get("https://rest-bar-backend.onrender.com/show-users");
         console.log(result.data);
         result.data.forEach((doc) => {
             list += `<div class="box">
@@ -31,7 +31,7 @@ showUser();
 
 const approve = async ({ status, id }) => {
     try {
-        const result = await axios.put(`https://rest-bar-backend.vercel.app/update/user`, { status: status,id:id });
+        const result = await axios.put(`https://rest-bar-backend.onrender.com/update/user`, { status: status,id:id });
         console.log(result);
         showUser();
     } catch (error) {
@@ -42,7 +42,7 @@ const approve = async ({ status, id }) => {
 const deleteUser =async (id) => {
     console.log(id);
     try {
-        const result = await axios.delete(`https://rest-bar-backend.vercel.app/delete/user/${id}`);
+        const result = await axios.delete(`https://rest-bar-backend.onrender.com/delete/user/${id}`);
         console.log(result);
         showUser();
     } catch (error) {
