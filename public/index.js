@@ -1,7 +1,7 @@
 const showUser = async () => {
     let list = "";
     try {
-        const result = await axios.get("http://localhost:3002/show-users");
+        const result = await axios.get("https://rest-bar-backend.onrender.com/show-users");
         console.log(result.data);
         result.data.forEach((doc) => {
             list += `<div class="box">
