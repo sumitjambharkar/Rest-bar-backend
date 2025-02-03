@@ -30,6 +30,7 @@ app.use(
       "http://localhost:3000",
       "http://localhost:5173",
       "https://cafedinner.com",
+      "https://rest-bar-backend.onrender.com"
     ],
   })
 );
